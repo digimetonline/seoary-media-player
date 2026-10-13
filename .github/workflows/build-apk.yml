@@ -39,6 +39,41 @@ jobs:
       - name: Generate Android project
         working-directory: buildsrc/seoary_media_player
         run: flutter create --platforms=android .
+      
+      - name: Set Android compile SDK to 36
+        working-directory: buildsrc/seoary_media_player
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          candidates = [
+              Path("android/app/build.gradle.kts"),
+              Path("android/app/build.gradle"),
+          ]
+
+          for path in candidates:
+              if not path.exists():
+                  continue
+
+              text = path.read_text()
+              updated = text.replace(
+                  "compileSdk = flutter.compileSdkVersion",
+                  "compileSdk = 36"
+              ).replace(
+                  "compileSdkVersion flutter.compileSdkVersion",
+                  "compileSdkVersion 36"
+              )
+
+              if updated != text:
+                  path.write_text(updated)
+                  print(f"Updated {path}")
+                  break
+          else:
+              raise SystemExit(
+                  "Could not find compileSdk setting in Android app Gradle file"
+              )
+          PY
 
       - name: Get dependencies
         working-directory: buildsrc/seoary_media_player
