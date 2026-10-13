@@ -1,0 +1,57 @@
+
+name: Build Seoary-Media Player APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "Seoary-Media-Player-APK-Build-Kit.zip"
+      - ".github/workflows/build-apk.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Extract project ZIP
+        run: |
+          unzip -q Seoary-Media-Player-APK-Build-Kit.zip -d buildsrc
+          test -f buildsrc/seoary_media_player/pubspec.yaml
+
+      - name: Generate Android project
+        working-directory: buildsrc/seoary_media_player
+        run: flutter create --platforms=android .
+
+      - name: Get dependencies
+        working-directory: buildsrc/seoary_media_player
+        run: flutter pub get
+
+      - name: Build release APK
+        working-directory: buildsrc/seoary_media_player
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Seoary-Media-Player-APK
+          path: buildsrc/seoary_media_player/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 7
